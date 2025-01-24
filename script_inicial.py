@@ -1,1 +1,1 @@
-print('Olá Mundo!')
+!pip install inmetpy
