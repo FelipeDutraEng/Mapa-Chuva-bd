@@ -1,1 +1,1 @@
-!pip install inmetpy
+pip install inmetpy
