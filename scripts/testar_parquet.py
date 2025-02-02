@@ -4,60 +4,80 @@ import pandas as pd
 # Caminho da pasta onde os arquivos Parquet foram salvos
 caminho_processed = r"C:\Users\Felip\OneDrive\Documentos\Engenharia de Dados\Projeto Dados Meteorologicos\dados\data_lake\processed"
 
-# Função para listar os arquivos Parquet convertidos
+# ------------------------------- FUNÇÕES ------------------------------- #
+
 def listar_arquivos_parquet():
-    anos = os.listdir(caminho_processed)
-    
+    """ Lista os arquivos Parquet disponíveis na pasta processed. """
+    anos = sorted(os.listdir(caminho_processed))
+
     print("\n📂 **Arquivos Parquet encontrados:**\n")
-    
     for ano in anos:
         caminho_ano = os.path.join(caminho_processed, ano)
         if os.path.isdir(caminho_ano):
             arquivos_parquet = [f for f in os.listdir(caminho_ano) if f.endswith('.parquet')]
-            print(f"✔ {ano}: {arquivos_parquet}")
+            if arquivos_parquet:
+                print(f"✔ {ano}: {arquivos_parquet}")
+            else:
+                print(f"⚠ {ano}: Nenhum arquivo Parquet encontrado.")
 
-# Função para testar a leitura de um arquivo Parquet
-def testar_leitura_parquet(ano_teste):
-    caminho_parquet = os.path.join(caminho_processed, ano_teste, f"{ano_teste}.parquet")
+def testar_leitura_parquet(ano):
+    """ Testa a leitura do arquivo Parquet de um determinado ano. """
+    caminho_parquet = os.path.join(caminho_processed, ano, f"{ano}.parquet")
+
+    if not os.path.exists(caminho_parquet):
+        print(f"\n❌ Arquivo {ano}.parquet **NÃO ENCONTRADO**.")
+        return
 
     try:
         df = pd.read_parquet(caminho_parquet)
-        print(f"\n✅ Arquivo {ano_teste}.parquet carregado com sucesso!")
-        print(df.head())  # Mostrar as primeiras 5 linhas
+        print(f"\n✅ Arquivo {ano}.parquet carregado com sucesso!")
+        print(df.head())  # Exibir as primeiras 5 linhas
     except Exception as e:
-        print(f"\n❌ Erro ao abrir {ano_teste}.parquet: {e}")
+        print(f"\n❌ Erro ao abrir {ano}.parquet: {e}")
 
-# Função para verificar se os valores -9999 foram convertidos corretamente para NaN
-def verificar_valores_nulos(ano_teste):
-    caminho_parquet = os.path.join(caminho_processed, ano_teste, f"{ano_teste}.parquet")
-    
+def verificar_valores_nulos(ano):
+    """ Verifica se os valores -9999 foram convertidos corretamente para NaN. """
+    caminho_parquet = os.path.join(caminho_processed, ano, f"{ano}.parquet")
+
+    if not os.path.exists(caminho_parquet):
+        return
+
     df = pd.read_parquet(caminho_parquet)
     
-    print(f"\n🔍 **Contagem de valores nulos no arquivo {ano_teste}.parquet:**")
-    print(df.isna().sum())
+    valores_nulos = df.isna().sum()
+    valores_nulos = valores_nulos[valores_nulos > 0]  # Mostrar apenas colunas com valores nulos
 
-# Função para contar os registros no arquivo Parquet
-def contar_registros(ano_teste):
-    caminho_parquet = os.path.join(caminho_processed, ano_teste, f"{ano_teste}.parquet")
-    
+    if valores_nulos.empty:
+        print(f"\n✅ **Nenhum valor nulo encontrado** no arquivo {ano}.parquet.")
+    else:
+        print(f"\n🔍 **Contagem de valores nulos no arquivo {ano}.parquet:**")
+        print(valores_nulos)
+
+def contar_registros(ano):
+    """ Conta o número de registros e colunas do arquivo Parquet. """
+    caminho_parquet = os.path.join(caminho_processed, ano, f"{ano}.parquet")
+
+    if not os.path.exists(caminho_parquet):
+        return
+
     df = pd.read_parquet(caminho_parquet)
-    
-    print(f"\n📊 **O arquivo {ano_teste}.parquet possui {df.shape[0]} registros e {df.shape[1]} colunas.**")
+    print(f"\n📊 **O arquivo {ano}.parquet possui {df.shape[0]} registros e {df.shape[1]} colunas.**")
 
 # ------------------------------- EXECUÇÃO DOS TESTES ------------------------------- #
 
 if __name__ == "__main__":
-    # Listar todos os arquivos Parquet gerados
+    # 1️⃣ Listar todos os arquivos Parquet gerados
     listar_arquivos_parquet()
 
-    # Escolher um ano para testar
-    ano_teste = "2000"  # Altere para outro ano, se necessário
+    # 2️⃣ Testar leitura, valores nulos e contagem para cada ano encontrado
+    anos = sorted(os.listdir(caminho_processed))
 
-    # Testar leitura do arquivo Parquet
-    testar_leitura_parquet(ano_teste)
+    for ano in anos:
+        print("\n" + "="*50)  # Separador para cada ano
+        print(f"📌 Testando o arquivo de {ano}...")
 
-    # Verificar se os valores -9999 foram convertidos corretamente para NaN
-    verificar_valores_nulos(ano_teste)
+        testar_leitura_parquet(ano)
+        verificar_valores_nulos(ano)
+        contar_registros(ano)
 
-    # Contar os registros no arquivo Parquet
-    contar_registros(ano_teste)
+    print("\n🎯 **Testes finalizados!**")
